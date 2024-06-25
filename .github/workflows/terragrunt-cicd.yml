@@ -47,7 +47,8 @@ jobs:
           sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
 
       - name: Set environment directory
-        run: echo "env_dir=${{ github.workspace }}/environments/staging/us-east-1" >> $GITHUB_ENV
+        id: set-env-dir
+        run: echo "env_dir=environments/staging/us-east-1" >> $GITHUB_ENV
 
       - name: Init
         run: |
@@ -62,7 +63,7 @@ jobs:
         continue-on-error: true
 
       - name: Post Plan Comment
-        if: steps.terragrunt-plan.outcome == 'success'
+        if: always()  # Cambiado para que siempre postee el comentario del plan, incluso si falla
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
