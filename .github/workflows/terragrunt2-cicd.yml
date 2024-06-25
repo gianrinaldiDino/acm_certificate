@@ -1,0 +1,61 @@
+name: 'Terragrunt CI'
+
+on:
+  push:
+    branches:
+    - staging
+  pull_request:
+    branches:
+    - staging
+
+jobs:
+  Terragrunt:
+    name: 'Terragrunt'
+    runs-on: ubuntu-latest
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # Configure AWS credentials using OIDC
+    - name: Configure AWS credentials using OIDC
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::214633882441:role/github-terraform-deployer
+        aws-region: us-east-1
+
+    # Install the latest version of Terragrunt CLI and configure the Terragrunt CLI configuration file with a Terragrunt Cloud user API token
+    - name: Setup Terraform v1.2.6
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.2.6
+        terraform_wrapper: true
+    - name: Setup Terraform version
+      run: terraform --version
+    - name: Setup Terraform wrapper path
+      run: which terraform
+
+    - name: Setup Terragrunt v0.38.4
+      run: |
+        sudo wget -q -O /bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v0.38.4/terragrunt_linux_amd64"
+        sudo chmod +x /bin/terragrunt
+        terragrunt -v
+
+    # Initialize a new or existing Terragrunt working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terragrunt Init
+      run: terragrunt init --terragrunt-non-interactive
+
+    # Generates an execution plan for Terragrunt
+    - name: Terragrunt Plan
+      run: terragrunt run-all plan --terragrunt-non-interactive
+
+    # On push to main, build or change infrastructure according to Terragrunt configuration files
+    - name: Terragrunt Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: terragrunt run-all apply --terragrunt-non-interactive
