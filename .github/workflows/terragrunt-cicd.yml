@@ -1,4 +1,4 @@
-name: Deploy staging infra with Terragrunt
+name: Deploy staging infra with Terragrunt test
 
 on:
   workflow_dispatch:
