@@ -60,8 +60,7 @@ jobs:
 
       - name: Set environment directory
         id: set-env-dir
-        run: |
-          echo "env_dir=environments/${{ github.event.inputs.environment }}/us-east-1" >> $GITHUB_ENV
+        run: echo "env_dir=${{ github.workspace }}/environments/${{ github.event.inputs.environment }}/us-east-1" >> $GITHUB_ENV
 
       - name: Init
         run: |
