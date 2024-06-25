@@ -30,9 +30,10 @@ jobs:
     # Configure AWS credentials using Access Key and Secret Key
     - name: Configure AWS credentials
       run: |
+        mkdir -p ~/.aws
         echo "[default]" > ~/.aws/credentials
-        echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
-        echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+        echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+        echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
         echo "[default]" > ~/.aws/config
         echo "region = $AWS_REGION" >> ~/.aws/config
 
