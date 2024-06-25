@@ -13,7 +13,7 @@ on:
           - production
   pull_request:
     branches:
-      - test-tg-cicd1
+      - test-1
 env:
   TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.cache/.terraform.d/plugin-cache
 
