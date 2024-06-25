@@ -1,4 +1,4 @@
-name: Automated deploy infra with Terragrunt
+name: Automated deploy infra with Terragrunt1
 
 on:
   workflow_dispatch:
