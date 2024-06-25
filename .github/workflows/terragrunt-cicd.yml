@@ -1,0 +1,111 @@
+name: Automated deploy infra with Terragrunt
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select environment to deploy'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+  pull_request:
+    branches:
+      - test-tg-cicd
+
+env:
+  TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.cache/.terraform.d/plugin-cache
+
+jobs:
+  plan-and-apply:
+    name: Plan and Apply
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::214633882441:role/GitHubActionsRole
+          aws-region: us-east-1
+
+      - name: Cache Terraform plugins
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.4.6"
+
+      - name: Install Terragrunt
+        run: |
+          TG_VERSION=0.50.16
+          wget https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64
+          chmod +x terragrunt_linux_amd64
+          sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
+
+      - name: Set environment directory
+        id: set-env-dir
+        run: echo "env_dir=${{ github.workspace }}/environments/${{ github.event.inputs.environment }}/us-east-1" >> $GITHUB_ENV
+
+      - name: Init
+        run: |
+          cd ${{ env.env_dir }}
+          terragrunt run-all init --terragrunt-non-interactive
+
+      - name: Plan
+        id: terragrunt-plan
+        run: |
+          cd ${{ env.env_dir }}
+          terragrunt run-all plan --terragrunt-non-interactive | tee plan.out
+        continue-on-error: true
+
+      - name: Post Plan Comment
+        if: steps.terragrunt-plan.outcome == 'success'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('plan.out', 'utf8');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const botComment = comments.find(comment => comment.user.login === 'github-actions[bot]');
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: `## Terraform Plan\n\n\`\`\`\n${plan}\n\`\`\``,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `## Terraform Plan\n\n\`\`\`\n${plan}\n\`\`\``,
+              });
+            }
+
+      - name: Apply
+        if: steps.terragrunt-plan.outcome == 'success' && github.event_name == 'workflow_dispatch'
+        run: |
+          cd ${{ env.env_dir }}
+          terragrunt run-all apply --terragrunt-non-interactive plan.tfplan
