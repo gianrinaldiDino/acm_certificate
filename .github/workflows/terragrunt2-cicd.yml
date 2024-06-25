@@ -3,15 +3,14 @@ name: 'Terragrunt CI'
 on:
   push:
     branches:
-    - staging
+    - main
   pull_request:
-    branches:
-    - staging
 
 env:
   AWS_REGION: us-east-1
   ENVIRONMENT: staging
-  AWS_OIDC_ROLE_ARN: arn:aws:iam::214633882441:role/github-terraform-deployer
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 jobs:
   Terragrunt:
@@ -26,25 +25,33 @@ jobs:
     steps:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2
 
-    # Configure AWS credentials using OIDC
-    - name: Configure AWS credentials using OIDC
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        role-to-assume: ${{ env.AWS_OIDC_ROLE_ARN }}
-        aws-region: ${{ env.AWS_REGION }}
+    # Configure AWS credentials using Access Key and Secret Key
+    - name: Configure AWS credentials
+      run: |
+        echo "[default]" > ~/.aws/credentials
+        echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+        echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+        echo "[default]" > ~/.aws/config
+        echo "region = $AWS_REGION" >> ~/.aws/config
 
     # Install the latest version of Terragrunt CLI and configure the Terragrunt CLI configuration file with a Terragrunt Cloud user API token
-    - name: Install Terraform and Terragrunt
+    - name: Setup Terraform v1.2.6
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.2.6
+        terraform_wrapper: true
+    - name: Setup Terraform version
+      run: terraform --version
+    - name: Setup Terraform wrapper path
+      run: which terraform
+
+    - name: Setup Terragrunt v0.38.4
       run: |
-        sudo apt-get update && sudo apt-get install -y unzip
-        curl -o terraform.zip https://releases.hashicorp.com/terraform/1.3.0/terraform_1.3.0_linux_amd64.zip
-        unzip terraform.zip
-        sudo mv terraform /usr/local/bin
-        curl -o terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v0.28.0/terragrunt_linux_amd64
-        sudo chmod +x terragrunt
-        sudo mv terragrunt /usr/local/bin
+        sudo wget -q -O /bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v0.38.4/terragrunt_linux_amd64"
+        sudo chmod +x /bin/terragrunt
+        terragrunt -v
 
     # Initialize a new or existing Terragrunt working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terragrunt Init
