@@ -15,17 +15,14 @@ jobs:
     name: 'Terragrunt'
     runs-on: ubuntu-latest
 
-    # Use the Bash shell regardless of whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
       run:
         shell: bash
 
     steps:
-    # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v2
 
-    # Configure AWS credentials using secrets
     - name: Configure AWS credentials
       run: |
         mkdir -p ~/.aws
@@ -35,7 +32,6 @@ jobs:
         echo "[default]" > ~/.aws/config
         echo "region = $AWS_REGION" >> ~/.aws/config
 
-    # Install the latest version of Terragrunt CLI and configure the Terragrunt CLI configuration file with a Terragrunt Cloud user API token
     - name: Setup Terraform v1.2.6
       uses: hashicorp/setup-terraform@v1
       with:
@@ -52,29 +48,33 @@ jobs:
         sudo chmod +x /bin/terragrunt
         terragrunt -v
 
-    # Ensure the environment.hcl file is present
-    - name: Check for environment.hcl
+    - name: Initialize Terragrunt in all subdirectories
       run: |
-        if [ ! -f environments/${{ env.ENVIRONMENT }}/environment.hcl ]; then
-          echo "Error: environment.hcl not found in environments/${{ env.ENVIRONMENT }}"
-          exit 1
-        fi
+        for dir in environments/${{ env.ENVIRONMENT }}/us-east-1/*; do
+          if [ -d "$dir" ]; then
+            cd "$dir"
+            terragrunt init --terragrunt-non-interactive
+            cd -
+          fi
+        done
 
-    # Initialize a new or existing Terragrunt working directory by creating initial files, loading any remote state, downloading modules, etc.
-    - name: Terragrunt Init
+    - name: Plan Terragrunt in all subdirectories
       run: |
-        cd environments/${{ env.ENVIRONMENT }}/us-east-1
-        terragrunt init --terragrunt-non-interactive
+        for dir in environments/${{ env.ENVIRONMENT }}/us-east-1/*; do
+          if [ -d "$dir" ]; then
+            cd "$dir"
+            terragrunt run-all plan --terragrunt-non-interactive | tee plan.out
+            cd -
+          fi
+        done
 
-    # Generates an execution plan for Terragrunt
-    - name: Terragrunt Plan
-      run: |
-        cd environments/${{ env.ENVIRONMENT }}/us-east-1
-        terragrunt run-all plan --terragrunt-non-interactive | tee plan.out
-
-    # On push to main, build or change infrastructure according to Terragrunt configuration files
-    - name: Terragrunt Apply
+    - name: Apply Terragrunt if on main branch
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
-        cd environments/${{ env.ENVIRONMENT }}/us-east-1
-        terragrunt run-all apply --terragrunt-non-interactive
+        for dir in environments/${{ env.ENVIRONMENT }}/us-east-1/*; do
+          if [ -d "$dir" ]; then
+            cd "$dir"
+            terragrunt run-all apply --terragrunt-non-interactive
+            cd -
+          fi
+        done
