@@ -17,6 +17,10 @@ jobs:
   plan:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -24,8 +28,8 @@ jobs:
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::214633882441:role/github-terraform-deployer
-          aws-region: us-east-1
+          role-to-assume: ${{ env.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Install Terraform and Terragrunt
         run: |
@@ -47,7 +51,6 @@ jobs:
           if [ $? -ne 0 ]; then
             echo "El plan de Terragrunt falló. Cancelando el deploy."
             exit 1
-          fi
 
   apply:
     needs: plan
@@ -60,8 +63,8 @@ jobs:
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::214633882441:role/github-terraform-deployer
-          aws-region: us-east-1
+          role-to-assume: ${{ env.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Aplicar infraestructura
         run: |
