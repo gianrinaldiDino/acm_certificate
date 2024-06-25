@@ -17,6 +17,10 @@ jobs:
   plan:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -63,4 +67,4 @@ jobs:
       - name: Aplicar infraestructura
         run: |
           cd environments/${{ env.ENVIRONMENT }}/${{ env.AWS_REGION }}
-          terragrunt run-all apply --terragrunt-non-interactive
+          terragrunt run-all apply --terragrunt-non-interactive plan.tfplan
