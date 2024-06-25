@@ -13,7 +13,7 @@ on:
           - production
   pull_request:
     branches:
-      - test-tg-cicd
+      - main
 
 env:
   TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.cache/.terraform.d/plugin-cache
@@ -60,7 +60,8 @@ jobs:
 
       - name: Set environment directory
         id: set-env-dir
-        run: echo "env_dir=${{ github.workspace }}/environments/${{ github.event.inputs.environment }}/us-east-1" >> $GITHUB_ENV
+        run: |
+          echo "env_dir=environments/${{ github.event.inputs.environment }}/us-east-1" >> $GITHUB_ENV
 
       - name: Init
         run: |
