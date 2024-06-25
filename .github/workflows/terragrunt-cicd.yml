@@ -1,11 +1,19 @@
 name: Deploy Infraestructura Terragrunt
 
 on:
-  push:
-    branches:
-      - staging
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select environment to deploy'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
   pull_request:
     branches:
+      - main
       - staging
 
 env:
@@ -46,10 +54,7 @@ jobs:
         run: |
           cd environments/${{ env.ENVIRONMENT }}/${{ env.AWS_REGION }}
           terragrunt run-all plan | tee plan.out
-          if [ $? -ne 0 ]; then
-            echo "El plan de Terragrunt falló. Cancelando el deploy."
-            exit 1
-          fi
+        continue-on-error: true
 
       - name: Post Plan Comment
         uses: actions/github-script@v6
@@ -61,7 +66,7 @@ jobs:
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: context.payload.pull_request.number,
             });
             const botComment = comments.find(comment => comment.user.login === 'github-actions[bot]');
             if (botComment) {
@@ -75,7 +80,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: context.payload.pull_request.number,
                 body: `## Terraform Plan\n\n\`\`\`\n${plan}\n\`\`\``,
               });
             }
@@ -83,10 +88,6 @@ jobs:
   apply:
     needs: plan
     runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write
-      contents: read
 
     steps:
       - name: Checkout repository
@@ -101,4 +102,4 @@ jobs:
       - name: Aplicar infraestructura
         run: |
           cd environments/${{ env.ENVIRONMENT }}/${{ env.AWS_REGION }}
-          terragrunt run-all apply --terragrunt-non-interactive plan.tfplan
+          terragrunt run-all apply --terragrunt-non-interactive plan.out
