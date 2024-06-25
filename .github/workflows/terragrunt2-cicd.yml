@@ -9,15 +9,13 @@ on:
 env:
   AWS_REGION: us-east-1
   ENVIRONMENT: staging
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 jobs:
   Terragrunt:
     name: 'Terragrunt'
     runs-on: ubuntu-latest
 
-    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    # Use the Bash shell regardless of whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
       run:
         shell: bash
@@ -27,7 +25,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    # Configure AWS credentials using Access Key and Secret Key
+    # Configure AWS credentials using secrets
     - name: Configure AWS credentials
       run: |
         mkdir -p ~/.aws
@@ -54,15 +52,29 @@ jobs:
         sudo chmod +x /bin/terragrunt
         terragrunt -v
 
+    # Ensure the environment.hcl file is present
+    - name: Check for environment.hcl
+      run: |
+        if [ ! -f environments/${{ env.ENVIRONMENT }}/environment.hcl ]; then
+          echo "Error: environment.hcl not found in environments/${{ env.ENVIRONMENT }}"
+          exit 1
+        fi
+
     # Initialize a new or existing Terragrunt working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terragrunt Init
-      run: terragrunt init --terragrunt-non-interactive
+      run: |
+        cd environments/${{ env.ENVIRONMENT }}/us-east-1
+        terragrunt init --terragrunt-non-interactive
 
     # Generates an execution plan for Terragrunt
     - name: Terragrunt Plan
-      run: terragrunt run-all plan --terragrunt-non-interactive
+      run: |
+        cd environments/${{ env.ENVIRONMENT }}/us-east-1
+        terragrunt run-all plan --terragrunt-non-interactive | tee plan.out
 
     # On push to main, build or change infrastructure according to Terragrunt configuration files
     - name: Terragrunt Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terragrunt run-all apply --terragrunt-non-interactive
+      run: |
+        cd environments/${{ env.ENVIRONMENT }}/us-east-1
+        terragrunt run-all apply --terragrunt-non-interactive
