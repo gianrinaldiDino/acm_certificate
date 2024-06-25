@@ -1,19 +1,7 @@
-name: Automated deploy infra with Terragrunt
+name: Deploy staging infra with Terragrunt
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Select environment to deploy'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
-  pull_request:
-    branches:
-      - main
 
 env:
   TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.cache/.terraform.d/plugin-cache
@@ -59,8 +47,7 @@ jobs:
           sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
 
       - name: Set environment directory
-        id: set-env-dir
-        run: echo "env_dir=${{ github.workspace }}/environments/${{ github.event.inputs.environment }}/us-east-1" >> $GITHUB_ENV
+        run: echo "env_dir=${{ github.workspace }}/environments/staging/us-east-1" >> $GITHUB_ENV
 
       - name: Init
         run: |
