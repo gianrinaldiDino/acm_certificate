@@ -11,7 +11,7 @@ on:
 env:
   AWS_REGION: us-east-1
   ENVIRONMENT: staging
-  AWS_OIDC_ROLE_ARN: arn:aws:iam::214633882441:role/GitHubAcionsRole
+  AWS_OIDC_ROLE_ARN: arn:aws:iam::214633882441:role/github-terraform-deployer
 
 jobs:
   plan:
@@ -24,7 +24,7 @@ jobs:
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::214633882441:role/GitHubActionsRole
+          role-to-assume: arn:aws:iam::214633882441:role/github-terraform-deployer
           aws-region: us-east-1
 
       - name: Install Terraform and Terragrunt
@@ -60,7 +60,7 @@ jobs:
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::214633882441:role/GitHubActionsRole
+          role-to-assume: arn:aws:iam::214633882441:role/github-terraform-deployer
           aws-region: us-east-1
 
       - name: Aplicar infraestructura
