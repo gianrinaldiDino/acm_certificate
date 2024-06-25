@@ -17,10 +17,6 @@ jobs:
   plan:
     runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write
-      contents: read
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -45,12 +41,10 @@ jobs:
         run: |
           cd environments/${{ env.ENVIRONMENT }}/${{ env.AWS_REGION }}
           terragrunt run-all plan
-
-      - name: Verificar resultado del plan
-        run: |
           if [ $? -ne 0 ]; then
             echo "El plan de Terragrunt falló. Cancelando el deploy."
             exit 1
+          fi
 
   apply:
     needs: plan
@@ -69,4 +63,4 @@ jobs:
       - name: Aplicar infraestructura
         run: |
           cd environments/${{ env.ENVIRONMENT }}/${{ env.AWS_REGION }}
-          terragrunt run-all apply --terragrunt-non-interactive plan.tfplan
+          terragrunt run-all apply --terragrunt-non-interactive
