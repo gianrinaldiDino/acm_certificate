@@ -20,6 +20,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout repository
@@ -44,15 +45,48 @@ jobs:
       - name: Planificar infraestructura
         run: |
           cd environments/${{ env.ENVIRONMENT }}/${{ env.AWS_REGION }}
-          terragrunt run-all plan
+          terragrunt run-all plan | tee plan.out
           if [ $? -ne 0 ]; then
             echo "El plan de Terragrunt falló. Cancelando el deploy."
             exit 1
           fi
 
+      - name: Post Plan Comment
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('environments/${{ env.ENVIRONMENT }}/${{ env.AWS_REGION }}/plan.out', 'utf8');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const botComment = comments.find(comment => comment.user.login === 'github-actions[bot]');
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: `## Terraform Plan\n\n\`\`\`\n${plan}\n\`\`\``,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `## Terraform Plan\n\n\`\`\`\n${plan}\n\`\`\``,
+              });
+            }
+
   apply:
     needs: plan
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout repository
