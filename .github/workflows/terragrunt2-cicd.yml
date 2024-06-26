@@ -1,75 +1,71 @@
 name: 'Terragrunt CI'
+
 on:
   push:
-  pull_request:
     branches:
-      - staging
+    - main
+  pull_request:
 
 env:
   AWS_REGION: us-east-1
   ENVIRONMENT: staging
-  AWS_OIDC_ROLE_ARN: arn:aws:iam::214633882441:role/GitHubActionsRole
 
 jobs:
-  deploy:
+  Terragrunt:
+    name: 'Terragrunt'
     runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write
-      contents: read
-      pull-requests: write
+    defaults:
+      run:
+        shell: bash
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v2
 
-      - name: Configure AWS credentials using OIDC
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: ${{ env.AWS_OIDC_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+    - name: Configure AWS credentials with OIDC
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/YOUR_ROLE_NAME
+        aws-region: ${{ env.AWS_REGION }}
 
-      - name: Setup Terraform v1.7.4
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: 1.7.4
-          terraform_wrapper: true
+    - name: Setup Terraform v1.7.4
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.7.4
+        terraform_wrapper: true
 
-      - name: Setup Terraform version
-        run: terraform --version
-  
-      - name: Setup Terraform wrapper path
-        run: which terraform
-  
-      - name: Setup Terragrunt v0.50.16
-        run: |
-          sudo wget -q -O /bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v0.50.16/terragrunt_linux_amd64"
-          sudo chmod +x /bin/terragrunt
-          terragrunt -v
+    - name: Setup Terraform version
+      run: terraform --version
 
-      - name: Initialize Terragrunt in all subdirectories
-        run: |
-          for dir in environments/${{ env.ENVIRONMENT }}/us-east-1/*; do
-            if [ -d "$dir" ]; then
-              cd "$dir"
-              terragrunt init --terragrunt-non-interactive
-              cd -
-            fi
-          done
-  
-#      - name: Initialize Terragrunt in VPC directory
-#        run: |
-#          cd environments/${{ env.ENVIRONMENT }}/us-east-1/vpc
-#          terragrunt init --terragrunt-non-interactive
-  
-      - name: Plan Terragrunt in all subdirectories
-        run: |
-          cd environments/${{ env.ENVIRONMENT }}/us-east-1
-          terragrunt run-all plan --terragrunt-non-interactive | tee plan.out
-  
-      - name: Apply Terragrunt if on main branch
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          cd environments/${{ env.ENVIRONMENT }}/us-east-1
-          terragrunt run-all apply --terragrunt-non-interactive
-  
+    - name: Setup Terraform wrapper path
+      run: which terraform
+
+    - name: Setup Terragrunt v0.50.16
+      run: |
+        sudo wget -q -O /bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v0.50.16/terragrunt_linux_amd64"
+        sudo chmod +x /bin/terragrunt
+        terragrunt -v
+
+    - name: Initialize Terragrunt in VPC directory
+      run: |
+        cd environments/${{ env.ENVIRONMENT }}/us-east-1/vpc
+        terragrunt init --terragrunt-non-interactive
+
+    - name: Plan Terragrunt in all subdirectories
+      run: |
+        cd environments/${{ env.ENVIRONMENT }}/us-east-1
+        terragrunt run-all plan --terragrunt-non-interactive | tee plan.out
+
+    - name: Debugging step
+      run: |
+        echo "Checking current directory structure"
+        ls -al environments/${{ env.ENVIRONMENT }}/us-east-1
+        echo "Validating terragrunt.hcl file"
+        terragrunt hclfmt environments/${{ env.ENVIRONMENT }}/us-east-1/vpc/terragrunt.hcl
+
+    - name: Apply Terragrunt if on main branch
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: |
+        cd environments/${{ env.ENVIRONMENT }}/us-east-1
+        terragrunt run-all apply --terragrunt-non-interactive
