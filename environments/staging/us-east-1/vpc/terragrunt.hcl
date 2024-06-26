@@ -1,7 +1,7 @@
 locals {
   environment_vars = read_terragrunt_config(find_in_parent_folders("environment.hcl")).locals
-  global_vars = read_terragrunt_config(find_in_parent_folders("globals/globals.hcl")).locals
-  resource = "vpc"
+  global_vars      = read_terragrunt_config(find_in_parent_folders("globals/globals.hcl")).locals
+  resource         = "vpc"
 }
 
 include "root" {
@@ -14,9 +14,9 @@ terraform {
 
 inputs = {
   name                                            = "${local.resource}-${local.global_vars.sufix}-${local.environment_vars.environment}"
-  cidr                                            = "10.80.0.0/16" 
+  cidr                                            = "10.80.0.0/16"
   azs                                             = ["us-east-1a", "us-east-1b", "us-east-1c"]
-  public_subnets                                  = ["10.80.0.0/24", "10.80.1.0/24", "10.80.2.0/24"] 
+  public_subnets                                  = ["10.80.0.0/24", "10.80.1.0/24", "10.80.2.0/24"]
   private_subnets                                 = ["10.80.6.0/24", "10.80.7.0/24", "10.80.8.0/24"]
   database_subnets                                = ["10.80.12.0/24", "10.80.13.0/24", "10.80.14.0/24"]
   enable_dns_hostnames                            = true
