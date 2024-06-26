@@ -35,7 +35,7 @@ jobs:
     - name: Setup Terraform v1.2.6
       uses: hashicorp/setup-terraform@v1
       with:
-        terraform_version: 1.2.6
+        terraform_version: 1.7.4
         terraform_wrapper: true
     - name: Setup Terraform version
       run: terraform --version
@@ -44,7 +44,7 @@ jobs:
 
     - name: Setup Terragrunt v0.38.4
       run: |
-        sudo wget -q -O /bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v0.38.4/terragrunt_linux_amd64"
+        sudo wget -q -O /bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v0.50.16/terragrunt_linux_amd64"
         sudo chmod +x /bin/terragrunt
         terragrunt -v
 
