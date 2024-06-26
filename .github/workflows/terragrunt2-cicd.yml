@@ -32,7 +32,7 @@ jobs:
         echo "[default]" > ~/.aws/config
         echo "region = $AWS_REGION" >> ~/.aws/config
 
-    - name: Setup Terraform v1.2.6
+    - name: Setup Terraform v1.7.4
       uses: hashicorp/setup-terraform@v1
       with:
         terraform_version: 1.7.4
@@ -42,7 +42,7 @@ jobs:
     - name: Setup Terraform wrapper path
       run: which terraform
 
-    - name: Setup Terragrunt v0.38.4
+    - name: Setup Terragrunt v0.50.16
       run: |
         sudo wget -q -O /bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v0.50.16/terragrunt_linux_amd64"
         sudo chmod +x /bin/terragrunt
