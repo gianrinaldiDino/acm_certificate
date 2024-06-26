@@ -47,27 +47,11 @@ jobs:
           sudo chmod +x /bin/terragrunt
           terragrunt -v
 
-      - name: Initialize Terragrunt in all subdirectories
-        run: |
-          for dir in environments/${{ env.ENVIRONMENT }}/us-east-1/*; do
-            if [ -d "$dir" ]; then
-              cd "$dir"
-              terragrunt init --terragrunt-non-interactive
-              cd -
-            fi
-          done
 
-      - name: Debugging step
+      - name: Initialize Terragrunt in VPC directory
         run: |
-          echo "Checking current directory structure"
-          ls -al environments/${{ env.ENVIRONMENT }}/us-east-1
-          echo "Validating terragrunt.hcl file"
-          terragrunt hclfmt environments/${{ env.ENVIRONMENT }}/us-east-1/vpc/terragrunt.hcl
-  
-#      - name: Initialize Terragrunt in VPC directory
-#        run: |
-#          cd environments/${{ env.ENVIRONMENT }}/us-east-1/vpc
-#          terragrunt init --terragrunt-non-interactive
+          cd environments/${{ env.ENVIRONMENT }}/us-east-1/vpc
+          terragrunt init --terragrunt-non-interactive
   
       - name: Plan Terragrunt in all subdirectories
         run: |
@@ -75,7 +59,7 @@ jobs:
           terragrunt run-all plan --terragrunt-non-interactive | tee plan.out
   
       - name: Apply Terragrunt if on main branch
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           cd environments/${{ env.ENVIRONMENT }}/us-east-1
           terragrunt run-all apply --terragrunt-non-interactive
