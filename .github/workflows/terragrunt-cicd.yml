@@ -1,19 +1,9 @@
 name: Deploy Infraestructura Terragrunt
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Select environment to deploy'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
+  push:
   pull_request:
     branches:
-      - main
       - staging
 
 env:
@@ -51,7 +41,7 @@ jobs:
 
       - name: Planificar infraestructura
         run: |
-          cd environments/${{ github.event.inputs.environment }}/${{ env.AWS_REGION }}
+          cd environments/staging/${{ env.AWS_REGION }}
           terragrunt run-all plan | tee plan.out
         continue-on-error: false
 
@@ -62,7 +52,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const path = `environments/${{ github.event.inputs.environment }}/${{ env.AWS_REGION }}/plan.out`;
+            const path = `environments/staging/${{ env.AWS_REGION }}/plan.out`;
             
             // Check if file exists and has content
             if (fs.existsSync(path) && fs.statSync(path).size > 0) {
@@ -95,5 +85,5 @@ jobs:
       - name: Aplicar infraestructura
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          cd environments/${{ github.event.inputs.environment }}/${{ env.AWS_REGION }}
+          cd environments/staging/${{ env.AWS_REGION }}
           terragrunt run-all apply --terragrunt-non-interactive plan.out
