@@ -23,22 +23,21 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Configure AWS credentials
-      run: |
-        mkdir -p ~/.aws
-        echo "[default]" > ~/.aws/credentials
-        echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
-        echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
-        echo "[default]" > ~/.aws/config
-        echo "region = $AWS_REGION" >> ~/.aws/config
+    - name: Configure AWS credentials with OIDC
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::214633882441:role/github-terraform-deployer
+        aws-region: ${{ env.AWS_REGION }}
 
     - name: Setup Terraform v1.7.4
       uses: hashicorp/setup-terraform@v1
       with:
         terraform_version: 1.7.4
         terraform_wrapper: true
+
     - name: Setup Terraform version
       run: terraform --version
+
     - name: Setup Terraform wrapper path
       run: which terraform
 
@@ -48,33 +47,18 @@ jobs:
         sudo chmod +x /bin/terragrunt
         terragrunt -v
 
-    - name: Initialize Terragrunt in all subdirectories
+    - name: Initialize Terragrunt in VPC directory
       run: |
-        for dir in environments/${{ env.ENVIRONMENT }}/us-east-1/*; do
-          if [ -d "$dir" ]; then
-            cd "$dir"
-            terragrunt init --terragrunt-non-interactive
-            cd -
-          fi
-        done
+        cd environments/${{ env.ENVIRONMENT }}/us-east-1/vpc
+        terragrunt init --terragrunt-non-interactive
 
     - name: Plan Terragrunt in all subdirectories
       run: |
-        for dir in environments/${{ env.ENVIRONMENT }}/us-east-1/*; do
-          if [ -d "$dir" ]; then
-            cd "$dir"
-            terragrunt run-all plan --terragrunt-non-interactive | tee plan.out
-            cd -
-          fi
-        done
+        cd environments/${{ env.ENVIRONMENT }}/us-east-1
+        terragrunt run-all plan --terragrunt-non-interactive | tee plan.out
 
     - name: Apply Terragrunt if on main branch
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
-        for dir in environments/${{ env.ENVIRONMENT }}/us-east-1/*; do
-          if [ -d "$dir" ]; then
-            cd "$dir"
-            terragrunt run-all apply --terragrunt-non-interactive
-            cd -
-          fi
-        done
+        cd environments/${{ env.ENVIRONMENT }}/us-east-1
+        terragrunt run-all apply --terragrunt-non-interactive

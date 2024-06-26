@@ -45,42 +45,42 @@ jobs:
           terragrunt run-all plan | tee plan.out
         continue-on-error: false
 
-      - name: Post Plan Comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const path = `environments/staging/${{ env.AWS_REGION }}/plan.out`;
-            
-            // Check if file exists and has content
-            if (fs.existsSync(path) && fs.statSync(path).size > 0) {
-              const plan = fs.readFileSync(path, 'utf8');
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-              });
-              const botComment = comments.find(comment => comment.user.login === 'github-actions[bot]');
-              if (botComment) {
-                await github.rest.issues.updateComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: botComment.id,
-                  body: `## Terraform Plan\n\n\`\`\`\n${plan}\n\`\`\``,
-                });
-              } else {
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: context.payload.pull_request.number,
-                  body: `## Terraform Plan\n\n\`\`\`\n${plan}\n\`\`\``,
-                });
-              }
-            } else {
-              console.log('No plan.out file found or the file is empty');
-            }
+#      - name: Post Plan Comment
+#        if: github.event_name == 'pull_request'
+#        uses: actions/github-script@v6
+#        with:
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          script: |
+#            const fs = require('fs');
+#            const path = `environments/staging/${{ env.AWS_REGION }}/plan.out`;
+#            
+#            // Check if file exists and has content
+#            if (fs.existsSync(path) && fs.statSync(path).size > 0) {
+#              const plan = fs.readFileSync(path, 'utf8');
+#              const { data: comments } = await github.rest.issues.listComments({
+#                owner: context.repo.owner,
+#                repo: context.repo.repo,
+#                issue_number: context.payload.pull_request.number,
+#              });
+#              const botComment = comments.find(comment => comment.user.login === 'github-actions[bot]');
+#              if (botComment) {
+#                await github.rest.issues.updateComment({
+#                  owner: context.repo.owner,
+#                  repo: context.repo.repo,
+#                  comment_id: botComment.id,
+#                  body: `## Terraform Plan\n\n\`\`\`\n${plan}\n\`\`\``,
+#                });
+#              } else {
+#                await github.rest.issues.createComment({
+#                  owner: context.repo.owner,
+#                  repo: context.repo.repo,
+#                  issue_number: context.payload.pull_request.number,
+#                  body: `## Terraform Plan\n\n\`\`\`\n${plan}\n\`\`\``,
+#                });
+#              }
+#            } else {
+#              console.log('No plan.out file found or the file is empty');
+#            }
 
       - name: Aplicar infraestructura
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
