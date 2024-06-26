@@ -46,11 +46,21 @@ jobs:
           sudo wget -q -O /bin/terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v0.50.16/terragrunt_linux_amd64"
           sudo chmod +x /bin/terragrunt
           terragrunt -v
-  
-      - name: Initialize Terragrunt in VPC directory
+
+      - name: Initialize Terragrunt in all subdirectories
         run: |
-          cd environments/${{ env.ENVIRONMENT }}/us-east-1/vpc
-          terragrunt init --terragrunt-non-interactive
+          for dir in environments/${{ env.ENVIRONMENT }}/us-east-1/*; do
+            if [ -d "$dir" ]; then
+              cd "$dir"
+              terragrunt init --terragrunt-non-interactive
+              cd -
+            fi
+          done
+  
+#      - name: Initialize Terragrunt in VPC directory
+#        run: |
+#          cd environments/${{ env.ENVIRONMENT }}/us-east-1/vpc
+#          terragrunt init --terragrunt-non-interactive
   
       - name: Plan Terragrunt in all subdirectories
         run: |
