@@ -52,10 +52,15 @@ jobs:
 #        run: |
 #          terragrunt init --terragrunt-non-interactive
   
-      - name: Plan Terragrunt in all subdirectories
+#      - name: Plan Terragrunt in all subdirectories
+#        run: |
+#          cd environments/${{ env.ENVIRONMENT }}/us-east-1
+#          terragrunt run-all plan --terragrunt-non-interactive | tee plan.out
+
+      - name: Plan Terragrunt
         run: |
-          cd environments/${{ env.ENVIRONMENT }}/us-east-1
-          terragrunt run-all plan --terragrunt-non-interactive | tee plan.out
+           cd environments/${{ env.ENVIRONMENT }}/us-east-1/${{ matrix.module }}
+           terragrunt plan --terragrunt-non-interactive | tee plan.out
   
       - name: Apply Terragrunt if on main branch
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
