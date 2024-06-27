@@ -19,6 +19,7 @@ dependencies {
 }
 dependency "vpc" {
   config_path = "../vpc"
+  mock_outputs_merge_strategy_with_state = "shallow"
 }
 
 inputs = {
