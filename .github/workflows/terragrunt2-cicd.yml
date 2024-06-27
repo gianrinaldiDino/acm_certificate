@@ -17,6 +17,7 @@ jobs:
     strategy:
       matrix:
         module: [vpc, alb, rds, vpc-endpoints]
+      max-parallel: 1
 
     permissions:
       id-token: write
