@@ -48,9 +48,9 @@ jobs:
           terragrunt -v
 
 
-      - name: Initialize Terragrunt in VPC directory
-        run: |
-          terragrunt init --terragrunt-non-interactive
+#      - name: Initialize Terragrunt in VPC directory
+#        run: |
+#          terragrunt init --terragrunt-non-interactive
   
       - name: Plan Terragrunt in all subdirectories
         run: |
