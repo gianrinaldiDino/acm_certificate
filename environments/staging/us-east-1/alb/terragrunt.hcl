@@ -8,7 +8,6 @@ include "root" {
   path = find_in_parent_folders()
 }
 
-
 terraform {
   source = "tfr:///terraform-aws-modules/alb/aws?version=9.9.0"
 }
@@ -21,11 +20,7 @@ dependencies {
 
 dependency "vpc" {
   config_path = "../vpc"
-  mock_outputs_merge_strategy_with_state = "shallow"
 }
-
-
-
 
 inputs = {
   name               = "${local.resource}-${local.global_vars.sufix}-${local.environment_vars.environment}"
