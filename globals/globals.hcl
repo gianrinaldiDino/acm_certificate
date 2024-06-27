@@ -1,0 +1,3 @@
+locals {
+    sufix = "athlete-ai"
+}
