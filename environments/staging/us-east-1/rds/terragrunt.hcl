@@ -21,7 +21,7 @@ dependency "vpc" {
   config_path = "../vpc"
     mock_outputs = {
     vpc_id     = "temporary-dummy-id"
-    new_output = "temporary-dummy-value"
+    private_subnets_cidr_blocks = "temporary-dummy-value"
   }
   mock_outputs_merge_strategy_with_state = "shallow"
 }
