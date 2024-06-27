@@ -13,6 +13,10 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        module: [vpc, alb, rds, vpc-endpoints]
 
     permissions:
       id-token: write
