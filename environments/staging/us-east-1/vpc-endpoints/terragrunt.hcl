@@ -20,6 +20,13 @@ dependencies {
 
 dependency "vpc" {
   config_path = "../vpc"
+    mock_outputs = {
+    vpc_id     = "temporary-terragrunt-id"
+    private_route_table_ids = ["10.0.1.0/24", "10.0.2.0/24"]
+    private_subnets = ["0.0.0.0/0", "0.0.0.0/0", "0.0.0.0/0"]
+    vpc_cidr_block = ["10.0.1.0/24", "10.0.2.0/24"]
+  }
+  mock_outputs_merge_strategy_with_state = "shallow"
 }
 
 inputs = {

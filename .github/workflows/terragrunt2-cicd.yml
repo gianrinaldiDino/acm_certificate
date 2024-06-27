@@ -67,7 +67,7 @@ jobs:
            terragrunt plan --terragrunt-non-interactive | tee plan.out
   
       - name: Apply Terragrunt if on main branch
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           cd environments/${{ env.ENVIRONMENT }}/us-east-1
           terragrunt run-all apply --terragrunt-non-interactive
