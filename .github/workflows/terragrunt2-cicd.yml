@@ -1,13 +1,23 @@
 name: 'Terragrunt CI'
 on:
   push:
-  pull_request:
     branches:
-      - staging
+      - main
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Choose the environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
 
 env:
   AWS_REGION: us-east-1
-  ENVIRONMENT: staging
+#  ENVIRONMENT: staging
   AWS_OIDC_ROLE_ARN: arn:aws:iam::214633882441:role/GitHubActionsRole
 
 jobs:
@@ -22,6 +32,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Set environment variable
+        run: echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v2
